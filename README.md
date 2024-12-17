@@ -2,6 +2,8 @@
 
 A Model Context Protocol (MCP) server for interacting with the App Store Connect API. This server provides tools for managing beta testers, beta groups, and apps in App Store Connect.
 
+<a href="https://glama.ai/mcp/servers/z4j2smln34"><img width="380" height="200" src="https://glama.ai/mcp/servers/z4j2smln34/badge" alt="app-store-connect-mcp-server MCP server" /></a>
+
 ## Installation
 Add the following to your Claude Config JSON file
 ```
