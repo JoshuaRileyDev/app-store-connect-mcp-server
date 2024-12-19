@@ -273,6 +273,42 @@ class AppStoreConnectServer {
             }
           }
         }
+      }, {
+        name: "get_bundle_id_info",
+        description: "Get detailed information about a specific bundle ID",
+        inputSchema: {
+          type: "object",
+          properties: {
+            bundleIdId: {
+              type: "string",
+              description: "The ID of the bundle ID to get information for"
+            },
+            include: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["profiles", "bundleIdCapabilities", "app"],
+                description: "Related resources to include in the response"
+              },
+              description: "Optional relationships to include in the response"
+            },
+            fields: {
+              type: "object",
+              properties: {
+                bundleIds: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                    enum: ["name", "platform", "identifier", "seedId"]
+                  },
+                  description: "Fields to include for the bundle ID"
+                }
+              },
+              description: "Specific fields to include in the response"
+            }
+          },
+          required: ["bundleIdId"]
+        }
       }]
     }));
 
@@ -518,6 +554,46 @@ class AppStoreConnectServer {
             }
 
             const response = await this.axiosInstance.get('/bundleIds', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              params
+            });
+
+            return {
+              toolResult: response.data
+            };
+          }
+
+          case "get_bundle_id_info": {
+            const { bundleIdId, include, fields } = request.params.arguments as {
+              bundleIdId: string;
+              include?: string[];
+              fields?: {
+                bundleIds?: string[];
+              };
+            };
+            
+            if (!bundleIdId) {
+              throw new McpError(
+                ErrorCode.InvalidParams,
+                "bundleIdId is required"
+              );
+            }
+
+            const params: Record<string, any> = {};
+
+            // Add fields if provided
+            if (fields?.bundleIds?.length) {
+              params['fields[bundleIds]'] = fields.bundleIds.join(',');
+            }
+
+            // Add includes if provided
+            if (include?.length) {
+              params.include = include.join(',');
+            }
+
+            const response = await this.axiosInstance.get(`/bundleIds/${bundleIdId}`, {
               headers: {
                 'Authorization': `Bearer ${token}`
               },
