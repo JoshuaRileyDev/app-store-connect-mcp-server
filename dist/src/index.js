@@ -4,9 +4,6 @@ import { ListToolsRequestSchema, CallToolRequestSchema, ErrorCode, McpError } fr
 import jwt from 'jsonwebtoken';
 import fs from 'fs/promises';
 import axios from 'axios';
-import { SCREENSHOT_DIMENSIONS } from './types.js';
-import sharp from 'sharp';
-import path from 'path';
 // Load environment variables
 const config = {
     keyId: process.env.APP_STORE_CONNECT_KEY_ID,
@@ -138,32 +135,34 @@ class AppStoreConnectServer {
                         },
                         required: ["groupId", "testerId"]
                     }
-                }, {
-                    name: "upload_screenshots",
-                    description: "Upload screenshots to App Store Connect",
-                    inputSchema: {
-                        type: "object",
-                        properties: {
-                            appId: {
-                                type: "string",
-                                description: "The ID of the app"
-                            },
-                            screenshotPaths: {
-                                type: "array",
-                                items: {
-                                    type: "string"
-                                },
-                                description: "Array of file paths to screenshots"
-                            },
-                            locale: {
-                                type: "string",
-                                description: "Locale for the screenshots (e.g., 'en-US')",
-                                default: "en-US"
-                            }
-                        },
-                        required: ["appId", "screenshotPaths"]
-                    }
-                }]
+                },
+                // {
+                // name: "upload_screenshots",
+                // description: "Upload screenshots to App Store Connect",
+                // inputSchema: {
+                //   type: "object",
+                //   properties: {
+                //     appId: {
+                //       type: "string",
+                //       description: "The ID of the app"
+                //     },
+                //     screenshotPaths: {
+                //       type: "array",
+                //       items: {
+                //         type: "string"
+                //       },
+                //       description: "Array of file paths to screenshots"
+                //     },
+                //     locale: {
+                //       type: "string",
+                //       description: "Locale for the screenshots (e.g., 'en-US')",
+                //       default: "en-US"
+                //     }
+                //   },
+                //   required: ["appId", "screenshotPaths"]
+                // }
+                // }
+            ]
         }));
         // Handle tool calls
         this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -268,91 +267,108 @@ class AppStoreConnectServer {
                             toolResult: { success: true, message: "Tester removed from group successfully" }
                         };
                     }
-                    case "upload_screenshots": {
-                        const { appId, screenshotPaths, locale = "en-US" } = request.params.arguments;
-                        if (!appId || !screenshotPaths?.length) {
-                            throw new McpError(ErrorCode.InvalidParams, "appId and screenshotPaths are required");
-                        }
-                        // Get available screenshot sets
-                        const setsResponse = await this.axiosInstance.get(`/apps/${appId}/appStoreVersionLocalizations/${locale}/appScreenshotSets`, {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        const results = [];
-                        for (const screenshotPath of screenshotPaths) {
-                            try {
-                                // Get image dimensions
-                                const metadata = await sharp(screenshotPath).metadata();
-                                if (!metadata.width || !metadata.height) {
-                                    throw new Error(`Could not get dimensions for ${screenshotPath}`);
-                                }
-                                // Find matching screenshot set
-                                const matchingSet = setsResponse.data.data.find((set) => {
-                                    const dimensions = SCREENSHOT_DIMENSIONS[set.attributes.screenshotDisplayType];
-                                    return dimensions &&
-                                        (dimensions.width === metadata.width && dimensions.height === metadata.height ||
-                                            dimensions.width === metadata.height && dimensions.height === metadata.width);
-                                });
-                                if (!matchingSet) {
-                                    results.push({
-                                        path: screenshotPath,
-                                        status: 'error',
-                                        message: `No matching screenshot set found for dimensions ${metadata.width}x${metadata.height}`
-                                    });
-                                    continue;
-                                }
-                                // Upload screenshot
-                                const fileName = path.basename(screenshotPath);
-                                const fileBuffer = await fs.readFile(screenshotPath);
-                                const uploadResponse = await this.axiosInstance.post(`/apps/${appId}/appScreenshots`, {
-                                    data: {
-                                        type: "appScreenshots",
-                                        attributes: {
-                                            fileName,
-                                            fileSize: fileBuffer.length
-                                        },
-                                        relationships: {
-                                            appScreenshotSet: {
-                                                data: {
-                                                    id: matchingSet.id,
-                                                    type: "appScreenshotSets"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }, {
-                                    headers: {
-                                        'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
-                                // Upload the actual file
-                                const { uploadOperations } = uploadResponse.data.data.attributes;
-                                await this.axiosInstance.put(uploadOperations[0].url, fileBuffer, {
-                                    headers: {
-                                        ...uploadOperations[0].requestHeaders,
-                                        'Content-Length': fileBuffer.length
-                                    }
-                                });
-                                results.push({
-                                    path: screenshotPath,
-                                    status: 'success',
-                                    setType: matchingSet.attributes.screenshotDisplayType
-                                });
-                            }
-                            catch (error) {
-                                results.push({
-                                    path: screenshotPath,
-                                    status: 'error',
-                                    message: error.message || 'Unknown error'
-                                });
-                            }
-                        }
-                        return {
-                            toolResult: {
-                                uploads: results
-                            }
-                        };
-                    }
+                    // case "upload_screenshots": {
+                    //   const { appId, screenshotPaths, locale = "en-US" } = request.params.arguments as {
+                    //     appId: string;
+                    //     screenshotPaths: string[];
+                    //     locale?: string;
+                    //   };
+                    //   if (!appId || !screenshotPaths?.length) {
+                    //     throw new McpError(
+                    //       ErrorCode.InvalidParams,
+                    //       "appId and screenshotPaths are required"
+                    //     );
+                    //   }
+                    //   // Get available screenshot sets
+                    //   const setsResponse = await this.axiosInstance.get<ListScreenshotSetsResponse>(
+                    //     `/apps/${appId}/appStoreVersionLocalizations/${locale}/appScreenshotSets`,
+                    //     {
+                    //       headers: { 'Authorization': `Bearer ${token}` }
+                    //     }
+                    //   );
+                    //   const results = [];
+                    //   for (const screenshotPath of screenshotPaths) {
+                    //     try {
+                    //       // Get image dimensions
+                    //       const metadata = await sharp(screenshotPath).metadata();
+                    //       if (!metadata.width || !metadata.height) {
+                    //         throw new Error(`Could not get dimensions for ${screenshotPath}`);
+                    //       }
+                    //       // Find matching screenshot set
+                    //       const matchingSet = setsResponse.data.data.find((set: ScreenshotSet) => {
+                    //         const dimensions = SCREENSHOT_DIMENSIONS[set.attributes.screenshotDisplayType as ScreenshotDisplayType];
+                    //         return dimensions && 
+                    //           (dimensions.width === metadata.width && dimensions.height === metadata.height ||
+                    //            dimensions.width === metadata.height && dimensions.height === metadata.width);
+                    //       });
+                    //       if (!matchingSet) {
+                    //         results.push({
+                    //           path: screenshotPath,
+                    //           status: 'error',
+                    //           message: `No matching screenshot set found for dimensions ${metadata.width}x${metadata.height}`
+                    //         });
+                    //         continue;
+                    //       }
+                    //       // Upload screenshot
+                    //       const fileName = path.basename(screenshotPath);
+                    //       const fileBuffer = await fs.readFile(screenshotPath);
+                    //       const uploadResponse = await this.axiosInstance.post(
+                    //         `/apps/${appId}/appScreenshots`,
+                    //         {
+                    //           data: {
+                    //             type: "appScreenshots",
+                    //             attributes: {
+                    //               fileName,
+                    //               fileSize: fileBuffer.length
+                    //             },
+                    //             relationships: {
+                    //               appScreenshotSet: {
+                    //                 data: {
+                    //                   id: matchingSet.id,
+                    //                   type: "appScreenshotSets"
+                    //                 }
+                    //               }
+                    //             }
+                    //           }
+                    //         },
+                    //         {
+                    //           headers: {
+                    //             'Authorization': `Bearer ${token}`,
+                    //             'Content-Type': 'application/json'
+                    //           }
+                    //         }
+                    //       );
+                    //       // Upload the actual file
+                    //       const { uploadOperations } = uploadResponse.data.data.attributes;
+                    //       await this.axiosInstance.put(
+                    //         uploadOperations[0].url,
+                    //         fileBuffer,
+                    //         {
+                    //           headers: {
+                    //             ...uploadOperations[0].requestHeaders,
+                    //             'Content-Length': fileBuffer.length
+                    //           }
+                    //         }
+                    //       );
+                    //       results.push({
+                    //         path: screenshotPath,
+                    //         status: 'success',
+                    //         setType: matchingSet.attributes.screenshotDisplayType
+                    //       });
+                    //     } catch (error: any) {
+                    //       results.push({
+                    //         path: screenshotPath,
+                    //         status: 'error',
+                    //         message: error.message || 'Unknown error'
+                    //       });
+                    //     }
+                    //   }
+                    //   return {
+                    //     toolResult: {
+                    //       uploads: results
+                    //     }
+                    //   };
+                    // }
                     default:
                         throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${request.params.name}`);
                 }
