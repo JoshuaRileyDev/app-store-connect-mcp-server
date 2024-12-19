@@ -309,6 +309,74 @@ class AppStoreConnectServer {
           },
           required: ["bundleIdId"]
         }
+      }, {
+        name: "list_devices",
+        description: "Get a list of all devices registered to your team",
+        inputSchema: {
+          type: "object",
+          properties: {
+            limit: {
+              type: "number",
+              description: "Maximum number of devices to return (default: 100, max: 200)",
+              minimum: 1,
+              maximum: 200
+            },
+            sort: {
+              type: "string",
+              description: "Sort order for the results",
+              enum: [
+                "name", "-name",
+                "platform", "-platform",
+                "status", "-status",
+                "udid", "-udid",
+                "deviceClass", "-deviceClass",
+                "model", "-model",
+                "addedDate", "-addedDate"
+              ]
+            },
+            filter: {
+              type: "object",
+              properties: {
+                name: {
+                  type: "string",
+                  description: "Filter by device name"
+                },
+                platform: {
+                  type: "string",
+                  description: "Filter by platform",
+                  enum: ["IOS", "MAC_OS"]
+                },
+                status: {
+                  type: "string",
+                  description: "Filter by status",
+                  enum: ["ENABLED", "DISABLED"]
+                },
+                udid: {
+                  type: "string",
+                  description: "Filter by device UDID"
+                },
+                deviceClass: {
+                  type: "string",
+                  description: "Filter by device class",
+                  enum: ["APPLE_WATCH", "IPAD", "IPHONE", "IPOD", "APPLE_TV", "MAC"]
+                }
+              }
+            },
+            fields: {
+              type: "object",
+              properties: {
+                devices: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                    enum: ["name", "platform", "udid", "deviceClass", "status", "model", "addedDate"]
+                  },
+                  description: "Fields to include for each device"
+                }
+              }
+            }
+          }
+        }
       }]
     }));
 
@@ -594,6 +662,59 @@ class AppStoreConnectServer {
             }
 
             const response = await this.axiosInstance.get(`/bundleIds/${bundleIdId}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              params
+            });
+
+            return {
+              toolResult: response.data
+            };
+          }
+
+          case "list_devices": {
+            interface ListDevicesArgs {
+              limit?: number;
+              sort?: string;
+              filter?: {
+                name?: string;
+                platform?: string;
+                status?: string;
+                udid?: string;
+                deviceClass?: string;
+              };
+              fields?: {
+                devices?: string[];
+              };
+            }
+
+            const { limit = 100, sort, filter, fields } = request.params.arguments as ListDevicesArgs || {};
+            
+            const params: Record<string, any> = {
+              limit: Math.min(Number(limit), 200)
+            };
+
+            // Add sort parameter if provided
+            if (sort) {
+              params.sort = sort;
+            }
+
+            // Add filters if provided
+            if (filter) {
+              if (filter.name) params['filter[name]'] = filter.name;
+              if (filter.platform) params['filter[platform]'] = filter.platform;
+              if (filter.status) params['filter[status]'] = filter.status;
+              if (filter.udid) params['filter[udid]'] = filter.udid;
+              if (filter.deviceClass) params['filter[deviceClass]'] = filter.deviceClass;
+            }
+
+            // Add fields if provided
+            if (fields?.devices?.length) {
+              params['fields[devices]'] = fields.devices.join(',');
+            }
+
+            const response = await this.axiosInstance.get('/devices', {
               headers: {
                 'Authorization': `Bearer ${token}`
               },
