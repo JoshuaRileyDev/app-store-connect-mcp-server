@@ -171,6 +171,343 @@ class AppStoreConnectServer {
                         },
                         required: ["appId"]
                     }
+                }, {
+                    name: "create_bundle_id",
+                    description: "Register a new bundle ID for app development",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            identifier: {
+                                type: "string",
+                                description: "The bundle ID string (e.g., 'com.example.app')"
+                            },
+                            name: {
+                                type: "string",
+                                description: "A name for the bundle ID"
+                            },
+                            platform: {
+                                type: "string",
+                                enum: ["IOS", "MAC_OS", "UNIVERSAL"],
+                                description: "The platform for this bundle ID"
+                            },
+                            seedId: {
+                                type: "string",
+                                description: "Your team's seed ID (optional)",
+                                required: false
+                            }
+                        },
+                        required: ["identifier", "name", "platform"]
+                    }
+                }, {
+                    name: "list_bundle_ids",
+                    description: "Find and list bundle IDs that are registered to your team",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            limit: {
+                                type: "number",
+                                description: "Maximum number of bundle IDs to return (default: 100, max: 200)",
+                                minimum: 1,
+                                maximum: 200
+                            },
+                            sort: {
+                                type: "string",
+                                description: "Sort order for the results",
+                                enum: [
+                                    "name", "-name",
+                                    "platform", "-platform",
+                                    "identifier", "-identifier",
+                                    "seedId", "-seedId",
+                                    "id", "-id"
+                                ]
+                            },
+                            filter: {
+                                type: "object",
+                                properties: {
+                                    identifier: {
+                                        type: "string",
+                                        description: "Filter by bundle identifier"
+                                    },
+                                    name: {
+                                        type: "string",
+                                        description: "Filter by name"
+                                    },
+                                    platform: {
+                                        type: "string",
+                                        description: "Filter by platform",
+                                        enum: ["IOS", "MAC_OS", "UNIVERSAL"]
+                                    },
+                                    seedId: {
+                                        type: "string",
+                                        description: "Filter by seed ID"
+                                    }
+                                }
+                            },
+                            include: {
+                                type: "array",
+                                items: {
+                                    type: "string",
+                                    enum: ["profiles", "bundleIdCapabilities", "app"]
+                                },
+                                description: "Related resources to include in the response"
+                            }
+                        }
+                    }
+                }, {
+                    name: "get_bundle_id_info",
+                    description: "Get detailed information about a specific bundle ID",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            bundleIdId: {
+                                type: "string",
+                                description: "The ID of the bundle ID to get information for"
+                            },
+                            include: {
+                                type: "array",
+                                items: {
+                                    type: "string",
+                                    enum: ["profiles", "bundleIdCapabilities", "app"],
+                                    description: "Related resources to include in the response"
+                                },
+                                description: "Optional relationships to include in the response"
+                            },
+                            fields: {
+                                type: "object",
+                                properties: {
+                                    bundleIds: {
+                                        type: "array",
+                                        items: {
+                                            type: "string",
+                                            enum: ["name", "platform", "identifier", "seedId"]
+                                        },
+                                        description: "Fields to include for the bundle ID"
+                                    }
+                                },
+                                description: "Specific fields to include in the response"
+                            }
+                        },
+                        required: ["bundleIdId"]
+                    }
+                }, {
+                    name: "list_devices",
+                    description: "Get a list of all devices registered to your team",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            limit: {
+                                type: "number",
+                                description: "Maximum number of devices to return (default: 100, max: 200)",
+                                minimum: 1,
+                                maximum: 200
+                            },
+                            sort: {
+                                type: "string",
+                                description: "Sort order for the results",
+                                enum: [
+                                    "name", "-name",
+                                    "platform", "-platform",
+                                    "status", "-status",
+                                    "udid", "-udid",
+                                    "deviceClass", "-deviceClass",
+                                    "model", "-model",
+                                    "addedDate", "-addedDate"
+                                ]
+                            },
+                            filter: {
+                                type: "object",
+                                properties: {
+                                    name: {
+                                        type: "string",
+                                        description: "Filter by device name"
+                                    },
+                                    platform: {
+                                        type: "string",
+                                        description: "Filter by platform",
+                                        enum: ["IOS", "MAC_OS"]
+                                    },
+                                    status: {
+                                        type: "string",
+                                        description: "Filter by status",
+                                        enum: ["ENABLED", "DISABLED"]
+                                    },
+                                    udid: {
+                                        type: "string",
+                                        description: "Filter by device UDID"
+                                    },
+                                    deviceClass: {
+                                        type: "string",
+                                        description: "Filter by device class",
+                                        enum: ["APPLE_WATCH", "IPAD", "IPHONE", "IPOD", "APPLE_TV", "MAC"]
+                                    }
+                                }
+                            },
+                            fields: {
+                                type: "object",
+                                properties: {
+                                    devices: {
+                                        type: "array",
+                                        items: {
+                                            type: "string",
+                                            enum: ["name", "platform", "udid", "deviceClass", "status", "model", "addedDate"]
+                                        },
+                                        description: "Fields to include for each device"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }, {
+                    name: "enable_bundle_capability",
+                    description: "Enable a capability for a bundle ID",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            bundleIdId: {
+                                type: "string",
+                                description: "The ID of the bundle ID"
+                            },
+                            capabilityType: {
+                                type: "string",
+                                description: "The type of capability to enable",
+                                enum: [
+                                    "ICLOUD",
+                                    "IN_APP_PURCHASE",
+                                    "GAME_CENTER",
+                                    "PUSH_NOTIFICATIONS",
+                                    "WALLET",
+                                    "INTER_APP_AUDIO",
+                                    "MAPS",
+                                    "ASSOCIATED_DOMAINS",
+                                    "PERSONAL_VPN",
+                                    "APP_GROUPS",
+                                    "HEALTHKIT",
+                                    "HOMEKIT",
+                                    "WIRELESS_ACCESSORY_CONFIGURATION",
+                                    "APPLE_PAY",
+                                    "DATA_PROTECTION",
+                                    "SIRIKIT",
+                                    "NETWORK_EXTENSIONS",
+                                    "MULTIPATH",
+                                    "HOT_SPOT",
+                                    "NFC_TAG_READING",
+                                    "CLASSKIT",
+                                    "AUTOFILL_CREDENTIAL_PROVIDER",
+                                    "ACCESS_WIFI_INFORMATION",
+                                    "NETWORK_CUSTOM_PROTOCOL",
+                                    "COREMEDIA_HLS_LOW_LATENCY",
+                                    "SYSTEM_EXTENSION_INSTALL",
+                                    "USER_MANAGEMENT",
+                                    "APPLE_ID_AUTH"
+                                ]
+                            },
+                            settings: {
+                                type: "array",
+                                description: "Optional capability settings",
+                                items: {
+                                    type: "object",
+                                    properties: {
+                                        key: {
+                                            type: "string",
+                                            description: "The setting key"
+                                        },
+                                        options: {
+                                            type: "array",
+                                            items: {
+                                                type: "object",
+                                                properties: {
+                                                    key: { type: "string" },
+                                                    enabled: { type: "boolean" }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        required: ["bundleIdId", "capabilityType"]
+                    }
+                }, {
+                    name: "disable_bundle_capability",
+                    description: "Disable a capability for a bundle ID",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            capabilityId: {
+                                type: "string",
+                                description: "The ID of the capability to disable"
+                            }
+                        },
+                        required: ["capabilityId"]
+                    }
+                }, {
+                    name: "list_users",
+                    description: "Get a list of all users registered on your App Store Connect team",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            limit: {
+                                type: "number",
+                                description: "Maximum number of users to return (default: 100, max: 200)",
+                                minimum: 1,
+                                maximum: 200
+                            },
+                            sort: {
+                                type: "string",
+                                description: "Sort order for the results",
+                                enum: [
+                                    "username", "-username",
+                                    "firstName", "-firstName",
+                                    "lastName", "-lastName",
+                                    "roles", "-roles"
+                                ]
+                            },
+                            filter: {
+                                type: "object",
+                                properties: {
+                                    username: {
+                                        type: "string",
+                                        description: "Filter by username"
+                                    },
+                                    roles: {
+                                        type: "array",
+                                        items: {
+                                            type: "string",
+                                            enum: [
+                                                "ADMIN",
+                                                "FINANCE",
+                                                "TECHNICAL",
+                                                "SALES",
+                                                "MARKETING",
+                                                "DEVELOPER",
+                                                "ACCOUNT_HOLDER",
+                                                "READ_ONLY",
+                                                "APP_MANAGER",
+                                                "ACCESS_TO_REPORTS",
+                                                "CUSTOMER_SUPPORT"
+                                            ]
+                                        },
+                                        description: "Filter by user roles"
+                                    },
+                                    visibleApps: {
+                                        type: "array",
+                                        items: {
+                                            type: "string"
+                                        },
+                                        description: "Filter by apps the user can see (app IDs)"
+                                    }
+                                }
+                            },
+                            include: {
+                                type: "array",
+                                items: {
+                                    type: "string",
+                                    enum: ["visibleApps"],
+                                    description: "Related resources to include in the response"
+                                }
+                            }
+                        }
+                    }
                 }]
         }));
         // Handle tool calls
@@ -288,6 +625,207 @@ class AppStoreConnectServer {
                             params: {
                                 include: include?.join(',')
                             }
+                        });
+                        return {
+                            toolResult: response.data
+                        };
+                    }
+                    case "create_bundle_id": {
+                        const { identifier, name, platform, seedId } = request.params.arguments;
+                        if (!identifier || !name || !platform) {
+                            throw new McpError(ErrorCode.InvalidParams, "identifier, name, and platform are required");
+                        }
+                        const requestBody = {
+                            data: {
+                                type: "bundleIds",
+                                attributes: {
+                                    identifier,
+                                    name,
+                                    platform,
+                                    seedId
+                                }
+                            }
+                        };
+                        const response = await this.axiosInstance.post('/bundleIds', requestBody, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        return {
+                            toolResult: response.data
+                        };
+                    }
+                    case "list_bundle_ids": {
+                        const { limit = 100, sort, filter, include } = request.params.arguments || {};
+                        const params = {
+                            limit: Math.min(Number(limit), 200)
+                        };
+                        // Add sort parameter if provided
+                        if (sort) {
+                            params.sort = sort;
+                        }
+                        // Add filters if provided
+                        if (filter) {
+                            if (filter.identifier)
+                                params['filter[identifier]'] = filter.identifier;
+                            if (filter.name)
+                                params['filter[name]'] = filter.name;
+                            if (filter.platform)
+                                params['filter[platform]'] = filter.platform;
+                            if (filter.seedId)
+                                params['filter[seedId]'] = filter.seedId;
+                        }
+                        // Add includes if provided
+                        if (Array.isArray(include) && include.length > 0) {
+                            params.include = include.join(',');
+                        }
+                        const response = await this.axiosInstance.get('/bundleIds', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            params
+                        });
+                        return {
+                            toolResult: response.data
+                        };
+                    }
+                    case "get_bundle_id_info": {
+                        const { bundleIdId, include, fields } = request.params.arguments;
+                        if (!bundleIdId) {
+                            throw new McpError(ErrorCode.InvalidParams, "bundleIdId is required");
+                        }
+                        const params = {};
+                        // Add fields if provided
+                        if (fields?.bundleIds?.length) {
+                            params['fields[bundleIds]'] = fields.bundleIds.join(',');
+                        }
+                        // Add includes if provided
+                        if (include?.length) {
+                            params.include = include.join(',');
+                        }
+                        const response = await this.axiosInstance.get(`/bundleIds/${bundleIdId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            params
+                        });
+                        return {
+                            toolResult: response.data
+                        };
+                    }
+                    case "list_devices": {
+                        const { limit = 100, sort, filter, fields } = request.params.arguments || {};
+                        const params = {
+                            limit: Math.min(Number(limit), 200)
+                        };
+                        // Add sort parameter if provided
+                        if (sort) {
+                            params.sort = sort;
+                        }
+                        // Add filters if provided
+                        if (filter) {
+                            if (filter.name)
+                                params['filter[name]'] = filter.name;
+                            if (filter.platform)
+                                params['filter[platform]'] = filter.platform;
+                            if (filter.status)
+                                params['filter[status]'] = filter.status;
+                            if (filter.udid)
+                                params['filter[udid]'] = filter.udid;
+                            if (filter.deviceClass)
+                                params['filter[deviceClass]'] = filter.deviceClass;
+                        }
+                        // Add fields if provided
+                        if (fields?.devices?.length) {
+                            params['fields[devices]'] = fields.devices.join(',');
+                        }
+                        const response = await this.axiosInstance.get('/devices', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            params
+                        });
+                        return {
+                            toolResult: response.data
+                        };
+                    }
+                    case "enable_bundle_capability": {
+                        const { bundleIdId, capabilityType, settings } = request.params.arguments;
+                        if (!bundleIdId || !capabilityType) {
+                            throw new McpError(ErrorCode.InvalidParams, "bundleIdId and capabilityType are required");
+                        }
+                        const requestBody = {
+                            data: {
+                                type: "bundleIdCapabilities",
+                                attributes: {
+                                    capabilityType,
+                                    settings
+                                },
+                                relationships: {
+                                    bundleId: {
+                                        data: {
+                                            id: bundleIdId,
+                                            type: "bundleIds"
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        const response = await this.axiosInstance.post('/bundleIdCapabilities', requestBody, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        return {
+                            toolResult: response.data
+                        };
+                    }
+                    case "disable_bundle_capability": {
+                        const { capabilityId } = request.params.arguments;
+                        if (!capabilityId) {
+                            throw new McpError(ErrorCode.InvalidParams, "capabilityId is required");
+                        }
+                        await this.axiosInstance.delete(`/bundleIdCapabilities/${capabilityId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        return {
+                            toolResult: {
+                                success: true,
+                                message: "Capability disabled successfully"
+                            }
+                        };
+                    }
+                    case "list_users": {
+                        const { limit = 100, sort, filter, include } = request.params.arguments || {};
+                        const params = {
+                            limit: Math.min(Number(limit), 200)
+                        };
+                        // Add sort parameter if provided
+                        if (sort) {
+                            params.sort = sort;
+                        }
+                        // Add filters if provided
+                        if (filter) {
+                            if (filter.username)
+                                params['filter[username]'] = filter.username;
+                            if (filter.roles?.length)
+                                params['filter[roles]'] = filter.roles.join(',');
+                            if (filter.visibleApps?.length)
+                                params['filter[visibleApps]'] = filter.visibleApps.join(',');
+                        }
+                        // Add includes if provided
+                        if (Array.isArray(include) && include.length > 0) {
+                            params.include = include.join(',');
+                        }
+                        const response = await this.axiosInstance.get('/users', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            params
                         });
                         return {
                             toolResult: response.data
