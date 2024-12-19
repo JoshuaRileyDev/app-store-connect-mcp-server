@@ -218,6 +218,61 @@ class AppStoreConnectServer {
           },
           required: ["identifier", "name", "platform"]
         }
+      }, {
+        name: "list_bundle_ids",
+        description: "Find and list bundle IDs that are registered to your team",
+        inputSchema: {
+          type: "object",
+          properties: {
+            limit: {
+              type: "number",
+              description: "Maximum number of bundle IDs to return (default: 100, max: 200)",
+              minimum: 1,
+              maximum: 200
+            },
+            sort: {
+              type: "string",
+              description: "Sort order for the results",
+              enum: [
+                "name", "-name",
+                "platform", "-platform", 
+                "identifier", "-identifier",
+                "seedId", "-seedId",
+                "id", "-id"
+              ]
+            },
+            filter: {
+              type: "object",
+              properties: {
+                identifier: {
+                  type: "string",
+                  description: "Filter by bundle identifier"
+                },
+                name: {
+                  type: "string",
+                  description: "Filter by name"
+                },
+                platform: {
+                  type: "string",
+                  description: "Filter by platform",
+                  enum: ["IOS", "MAC_OS", "UNIVERSAL"]
+                },
+                seedId: {
+                  type: "string",
+                  description: "Filter by seed ID"
+                }
+              }
+            },
+            include: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["profiles", "bundleIdCapabilities", "app"]
+              },
+              description: "Related resources to include in the response"
+            }
+          }
+        }
       }]
     }));
 
@@ -418,6 +473,55 @@ class AppStoreConnectServer {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
               }
+            });
+
+            return {
+              toolResult: response.data
+            };
+          }
+
+          case "list_bundle_ids": {
+            interface ListBundleIdsArgs {
+              limit?: number;
+              sort?: string;
+              filter?: {
+                identifier?: string;
+                name?: string;
+                platform?: string;
+                seedId?: string;
+              };
+              include?: string[];
+            }
+
+            const { limit = 100, sort, filter, include } = request.params.arguments as ListBundleIdsArgs || {};
+            
+            const params: Record<string, any> = {
+              limit: Math.min(Number(limit), 200)
+            };
+
+            // Add sort parameter if provided
+            if (sort) {
+              params.sort = sort;
+            }
+
+            // Add filters if provided
+            if (filter) {
+              if (filter.identifier) params['filter[identifier]'] = filter.identifier;
+              if (filter.name) params['filter[name]'] = filter.name;
+              if (filter.platform) params['filter[platform]'] = filter.platform;
+              if (filter.seedId) params['filter[seedId]'] = filter.seedId;
+            }
+
+            // Add includes if provided
+            if (Array.isArray(include) && include.length > 0) {
+              params.include = include.join(',');
+            }
+
+            const response = await this.axiosInstance.get('/bundleIds', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              params
             });
 
             return {
