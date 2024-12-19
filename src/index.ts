@@ -377,6 +377,157 @@ class AppStoreConnectServer {
             }
           }
         }
+      }, {
+        name: "enable_bundle_capability",
+        description: "Enable a capability for a bundle ID",
+        inputSchema: {
+          type: "object",
+          properties: {
+            bundleIdId: {
+              type: "string",
+              description: "The ID of the bundle ID"
+            },
+            capabilityType: {
+              type: "string",
+              description: "The type of capability to enable",
+              enum: [
+                "ICLOUD",
+                "IN_APP_PURCHASE",
+                "GAME_CENTER",
+                "PUSH_NOTIFICATIONS",
+                "WALLET",
+                "INTER_APP_AUDIO",
+                "MAPS",
+                "ASSOCIATED_DOMAINS",
+                "PERSONAL_VPN",
+                "APP_GROUPS",
+                "HEALTHKIT",
+                "HOMEKIT",
+                "WIRELESS_ACCESSORY_CONFIGURATION",
+                "APPLE_PAY",
+                "DATA_PROTECTION",
+                "SIRIKIT",
+                "NETWORK_EXTENSIONS",
+                "MULTIPATH",
+                "HOT_SPOT",
+                "NFC_TAG_READING",
+                "CLASSKIT",
+                "AUTOFILL_CREDENTIAL_PROVIDER",
+                "ACCESS_WIFI_INFORMATION",
+                "NETWORK_CUSTOM_PROTOCOL",
+                "COREMEDIA_HLS_LOW_LATENCY",
+                "SYSTEM_EXTENSION_INSTALL",
+                "USER_MANAGEMENT",
+                "APPLE_ID_AUTH"
+              ]
+            },
+            settings: {
+              type: "array",
+              description: "Optional capability settings",
+              items: {
+                type: "object",
+                properties: {
+                  key: {
+                    type: "string",
+                    description: "The setting key"
+                  },
+                  options: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        key: { type: "string" },
+                        enabled: { type: "boolean" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          required: ["bundleIdId", "capabilityType"]
+        }
+      }, {
+        name: "disable_bundle_capability",
+        description: "Disable a capability for a bundle ID",
+        inputSchema: {
+          type: "object",
+          properties: {
+            capabilityId: {
+              type: "string",
+              description: "The ID of the capability to disable"
+            }
+          },
+          required: ["capabilityId"]
+        }
+      }, {
+        name: "list_users",
+        description: "Get a list of all users registered on your App Store Connect team",
+        inputSchema: {
+          type: "object",
+          properties: {
+            limit: {
+              type: "number",
+              description: "Maximum number of users to return (default: 100, max: 200)",
+              minimum: 1,
+              maximum: 200
+            },
+            sort: {
+              type: "string",
+              description: "Sort order for the results",
+              enum: [
+                "username", "-username",
+                "firstName", "-firstName",
+                "lastName", "-lastName",
+                "roles", "-roles"
+              ]
+            },
+            filter: {
+              type: "object",
+              properties: {
+                username: {
+                  type: "string",
+                  description: "Filter by username"
+                },
+                roles: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                    enum: [
+                      "ADMIN",
+                      "FINANCE",
+                      "TECHNICAL",
+                      "SALES",
+                      "MARKETING",
+                      "DEVELOPER",
+                      "ACCOUNT_HOLDER",
+                      "READ_ONLY",
+                      "APP_MANAGER",
+                      "ACCESS_TO_REPORTS",
+                      "CUSTOMER_SUPPORT"
+                    ]
+                  },
+                  description: "Filter by user roles"
+                },
+                visibleApps: {
+                  type: "array",
+                  items: {
+                    type: "string"
+                  },
+                  description: "Filter by apps the user can see (app IDs)"
+                }
+              }
+            },
+            include: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["visibleApps"],
+                description: "Related resources to include in the response"
+              }
+            }
+          }
+        }
       }]
     }));
 
@@ -715,6 +866,129 @@ class AppStoreConnectServer {
             }
 
             const response = await this.axiosInstance.get('/devices', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              params
+            });
+
+            return {
+              toolResult: response.data
+            };
+          }
+
+          case "enable_bundle_capability": {
+            const { bundleIdId, capabilityType, settings } = request.params.arguments as {
+              bundleIdId: string;
+              capabilityType: string;
+              settings?: Array<{
+                key: string;
+                options: Array<{
+                  key: string;
+                  enabled: boolean;
+                }>;
+              }>;
+            };
+            
+            if (!bundleIdId || !capabilityType) {
+              throw new McpError(
+                ErrorCode.InvalidParams,
+                "bundleIdId and capabilityType are required"
+              );
+            }
+
+            const requestBody = {
+              data: {
+                type: "bundleIdCapabilities",
+                attributes: {
+                  capabilityType,
+                  settings
+                },
+                relationships: {
+                  bundleId: {
+                    data: {
+                      id: bundleIdId,
+                      type: "bundleIds"
+                    }
+                  }
+                }
+              }
+            };
+
+            const response = await this.axiosInstance.post('/bundleIdCapabilities', requestBody, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            return {
+              toolResult: response.data
+            };
+          }
+
+          case "disable_bundle_capability": {
+            const { capabilityId } = request.params.arguments as {
+              capabilityId: string;
+            };
+            
+            if (!capabilityId) {
+              throw new McpError(
+                ErrorCode.InvalidParams,
+                "capabilityId is required"
+              );
+            }
+
+            await this.axiosInstance.delete(`/bundleIdCapabilities/${capabilityId}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+
+            return {
+              toolResult: { 
+                success: true, 
+                message: "Capability disabled successfully" 
+              }
+            };
+          }
+
+          case "list_users": {
+            interface ListUsersArgs {
+              limit?: number;
+              sort?: string;
+              filter?: {
+                username?: string;
+                roles?: string[];
+                visibleApps?: string[];
+              };
+              include?: string[];
+            }
+
+            const { limit = 100, sort, filter, include } = request.params.arguments as ListUsersArgs || {};
+            
+            const params: Record<string, any> = {
+              limit: Math.min(Number(limit), 200)
+            };
+
+            // Add sort parameter if provided
+            if (sort) {
+              params.sort = sort;
+            }
+
+            // Add filters if provided
+            if (filter) {
+              if (filter.username) params['filter[username]'] = filter.username;
+              if (filter.roles?.length) params['filter[roles]'] = filter.roles.join(',');
+              if (filter.visibleApps?.length) params['filter[visibleApps]'] = filter.visibleApps.join(',');
+            }
+
+            // Add includes if provided
+            if (Array.isArray(include) && include.length > 0) {
+              params.include = include.join(',');
+            }
+
+            const response = await this.axiosInstance.get('/users', {
               headers: {
                 'Authorization': `Bearer ${token}`
               },
