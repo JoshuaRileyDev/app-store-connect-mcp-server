@@ -191,6 +191,33 @@ class AppStoreConnectServer {
           },
           required: ["appId"]
         }
+      }, {
+        name: "create_bundle_id",
+        description: "Register a new bundle ID for app development",
+        inputSchema: {
+          type: "object",
+          properties: {
+            identifier: {
+              type: "string",
+              description: "The bundle ID string (e.g., 'com.example.app')"
+            },
+            name: {
+              type: "string",
+              description: "A name for the bundle ID"
+            },
+            platform: {
+              type: "string",
+              enum: ["IOS", "MAC_OS", "UNIVERSAL"],
+              description: "The platform for this bundle ID"
+            },
+            seedId: {
+              type: "string",
+              description: "Your team's seed ID (optional)",
+              required: false
+            }
+          },
+          required: ["identifier", "name", "platform"]
+        }
       }]
     }));
 
@@ -351,6 +378,45 @@ class AppStoreConnectServer {
               },
               params: {
                 include: include?.join(',')
+              }
+            });
+
+            return {
+              toolResult: response.data
+            };
+          }
+
+          case "create_bundle_id": {
+            const { identifier, name, platform, seedId } = request.params.arguments as {
+              identifier: string;
+              name: string;
+              platform: string;
+              seedId?: string;
+            };
+            
+            if (!identifier || !name || !platform) {
+              throw new McpError(
+                ErrorCode.InvalidParams,
+                "identifier, name, and platform are required"
+              );
+            }
+
+            const requestBody = {
+              data: {
+                type: "bundleIds",
+                attributes: {
+                  identifier,
+                  name,
+                  platform,
+                  seedId
+                }
+              }
+            };
+
+            const response = await this.axiosInstance.post('/bundleIds', requestBody, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
               }
             });
 
