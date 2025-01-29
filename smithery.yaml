@@ -1,0 +1,25 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - appStoreConnectKeyId
+      - appStoreConnectIssuerId
+      - appStoreConnectP8Path
+    properties:
+      appStoreConnectKeyId:
+        type: string
+        description: The App Store Connect API Key ID.
+      appStoreConnectIssuerId:
+        type: string
+        description: The App Store Connect API Issuer ID.
+      appStoreConnectP8Path:
+        type: string
+        description: The file path to the App Store Connect API .p8 key.
+  commandFunction:
+    # A function that produces the CLI command to start the MCP on stdio.
+    |-
+    (config) => ({command: 'node', args: ['dist/src/index.js'], env: {APP_STORE_CONNECT_KEY_ID: config.appStoreConnectKeyId, APP_STORE_CONNECT_ISSUER_ID: config.appStoreConnectIssuerId, APP_STORE_CONNECT_P8_PATH: config.appStoreConnectP8Path}})
