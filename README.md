@@ -28,6 +28,8 @@ The App Store Connect MCP Server is a comprehensive tool that bridges the gap be
 This server transforms complex App Store Connect operations into simple conversational commands, whether you're checking app analytics, managing beta testers, updating app descriptions, or exploring your development pipeline.
 
 <a href="https://glama.ai/mcp/servers/z4j2smln34"><img width="380" height="200" src="https://glama.ai/mcp/servers/z4j2smln34/badge" alt="app-store-connect-mcp-server MCP server" /></a>
+
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/JoshuaRileyDev/app-store-connect-mcp-server)](https://archestra.ai/mcp-catalog/joshuarileydev__app-store-connect-mcp-server)
 <a href="https://smithery.ai/server/appstore-connect-mcp-server" style="text-decoration: none;">
   <img alt="Smithery Installations" src="https://smithery.ai/badge/appstore-connect-mcp-server" />
 </a>
